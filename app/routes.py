@@ -4,10 +4,12 @@ from functools import wraps
 import folium
 import threading
 import time
+import os
 from datetime import datetime
 from app.socketio_bp import get_route, move_taxi  # Importing the functions
 
 main = Blueprint('main', __name__)
+base_dir = r"C:\Users\SAHITHYAMOGILI\Desktop\Projects\testing\app"
 
 def login_required(f):
     @wraps(f)
@@ -183,7 +185,7 @@ def show_map():
     route = get_route(start_location, end_location)
     if route:
         current_app.extensions['socketio'].emit('route_init', {'full_route': route})
-        taxi_thread = threading.Thread(target=move_taxi, args=(taxi_id, route, ride_id))
+        taxi_thread = threading.Thread(target=move_taxi, args=(current_app._get_current_object(), taxi_id, route, ride_id))
         taxi_thread.start()
 
     return render_template('map.html')
@@ -193,15 +195,15 @@ def visualize_taxis():
     taxis = list(current_app.config['db'].taxis.find())
     m = folium.Map(location=[29.7604, -95.3698], zoom_start=13)
 
-    icons = {
-        'Utility': '/static/utility.png',
-        'Deluxe': '/static/deluxe.png',
-        'Luxury': '/static/luxury.png',
-        'default': '/static/default.png'
+    icon_paths = {
+        'Utility': 'static/utility.png',
+        'Deluxe': 'static/deluxe.png',
+        'Luxury': 'static/luxury.png',
+        'default': 'static/default.png'
     }
-
+    icons = {name: os.path.join(base_dir, path) for name, path in icon_paths.items()}
     for taxi in taxis:
-        icon_url = icons.get(taxi['type'], icons['default'])
+        icon_url = icons[taxi['type']]
         icon = folium.CustomIcon(
             icon_image=icon_url,
             icon_size=(30, 30),
@@ -209,7 +211,7 @@ def visualize_taxis():
         )
 
         folium.Marker(
-            location=[taxi['location']['coordinates'][1], taxi['            location'][0]],
+            location=[taxi['location']['coordinates'][1], taxi['location']['coordinates'][0]],
             icon=icon,
             popup=f"Taxi ID: {taxi['taxi_id']}<br>Type: {taxi['type']}"
         ).add_to(m)
@@ -241,7 +243,8 @@ def start_ride():
     route = get_route(start_location, end_location)
     if route:
         current_app.extensions['socketio'].emit('route_init', {'full_route': route})
-        taxi_thread = threading.Thread(target=move_taxi, args=(taxi_id, route, ride_id))
+        
+        taxi_thread = threading.Thread(target=move_taxi, args=(current_app._get_current_object(), taxi_id, route, ride_id))
         taxi_thread.start()
 
     return jsonify({"message": "Ride started"}), 200

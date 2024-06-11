@@ -7,7 +7,7 @@ from datetime import datetime
 import requests
 
 socketio_bp = Blueprint('socketio_bp', __name__)
-socketio = SocketIO()
+socket_io = SocketIO()
 
 client = MongoClient('mongodb+srv://CloudProjectGroup01:dbhEGgjTGz2WjSGk@cluster0.ejz2u2z.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0')
 db = client['HoustonTaxiDB']
@@ -113,10 +113,10 @@ def show_map():
 
     return render_template('map.html')
 
-@socketio.on('connect')
+@socket_io.on('connect')
 def test_connect():
     print('Client connected')
 
-@socketio.on('disconnect')
+@socket_io.on('disconnect')
 def test_disconnect():
     print('Client disconnected')
