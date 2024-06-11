@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Driver Dashboard{% endblock %}
+{% block content %}
+<h2>Welcome, {{ session['username'] }}</h2>
+<div class="nav-links">
+    <a href="/update_location">Update Location</a><br>
+    <a href="/view_requests">View Ride Requests</a><br>
+    <a href="/update_profile">Update Profile</a><br>
+</div>
+{% endblock %}

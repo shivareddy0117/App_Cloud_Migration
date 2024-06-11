@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Taxi Aggregator{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <h1>Taxi Aggregator</h1>
+    <div class="nav-links">
+        <a href="/login_user">User Login</a> | <a href="/register_user">User Registration</a><br>
+        <a href="/login_driver">Driver Login</a> | <a href="/register_driver">Driver Registration</a>
+    </div>
+    {% block content %}{% endblock %}
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

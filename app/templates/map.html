@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Taxi Tracker</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <style>
+        #map { height: 100vh; }
+
+        .start-icon, .end-icon, .taxi-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 32px;
+            width: 32px;
+        }
+        .start-icon i {
+            color: green;
+            font-size: 24px;
+        }
+        .end-icon i {
+            color: red;
+            font-size: 24px;
+        }
+        .taxi-icon i {
+            color: blue;
+            font-size: 24px;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <script>
+        var map = L.map('map').setView([29.7604, -95.3698], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19
+        }).addTo(map);
+
+        var startIcon = L.divIcon({
+            className: 'start-icon',
+            html: '<i class="fa-solid fa-map-pin"></i>',
+            iconSize: [32, 32],
+            iconAnchor: [16, 32],
+            popupAnchor: [0, -32]
+        });
+
+        var endIcon = L.divIcon({
+            className: 'end-icon',
+            html: '<i class="fa-solid fa-location-dot"></i>',
+            iconSize: [32, 32],
+            iconAnchor: [16, 32],
+            popupAnchor: [0, -32]
+        });
+
+        var taxiIcon = L.divIcon({
+            className: 'taxi-icon',
+            html: '<i class="fa-solid fa-taxi"></i>',
+            iconSize: [32, 32],
+            iconAnchor: [16, 32],
+            popupAnchor: [0, -32]
+        });
+
+        var taxiMarker = L.marker([29.7604, -95.3698], { icon: taxiIcon }).addTo(map);
+        var plannedRoute = L.polyline([], { color: 'red' }).addTo(map); // Planned path in red
+        var coveredRoute = L.polyline([], { color: 'blue' }).addTo(map); // Covered path in blue
+
+        var startMarker = null;
+        var endMarker = null;
+
+        var socket = io('http://' + document.domain + ':' + location.port);
+
+        socket.on('connect', function() {
+            console.log('Socket.IO connected');
+        });
+
+        socket.on('route_init', function(data) {
+            console.log('Received initial route:', data.full_route); // Debug print
+
+            if (!startMarker) {
+                startMarker = L.marker(data.full_route[0], { icon: startIcon }).addTo(map).bindPopup('Start Point');
+            }
+
+            if (!endMarker) {
+                endMarker = L.marker(data.full_route[data.full_route.length - 1], { icon: endIcon }).addTo(map).bindPopup('Destination Point');
+            }
+
+            plannedRoute.setLatLngs(data.full_route);
+        });
+
+        // Smoothly move the marker to the new position
+        function moveMarker(marker, newPos) {
+            var currentPos = marker.getLatLng();
+            var latDiff = newPos[0] - currentPos.lat;
+            var lngDiff = newPos[1] - currentPos.lng;
+
+            var steps = 20;
+            var stepLat = latDiff / steps;
+            var stepLng = lngDiff / steps;
+
+            var step = 0;
+            function moveStep() {
+                if (step < steps) {
+                    var newLat = currentPos.lat + stepLat * step;
+                    var newLng = currentPos.lng + stepLng * step;
+                    marker.setLatLng([newLat, newLng]);
+                    step++;
+                    setTimeout(moveStep, 50);
+                }
+            }
+            moveStep();
+        }
+
+        // Update taxi position and covered path
+        socket.on('taxi_update', function(data) {
+            console.log('Received data:', data); // Debug print
+            var newPos = [data.lat, data.lng];
+            moveMarker(taxiMarker, newPos);
+            coveredRoute.setLatLngs(data.covered_path);
+            console.log(`Taxi moved to ${newPos}`);  // Debug print
+        });
+
+        // Function to start a ride (for testing purposes)
+        function startRide() {
+            fetch('/start_ride', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    ride_id: 'Ride001',
+                    user_id: 'User001',
+                    taxi_id: 'Taxi001',
+                    start_location: [29.706516392518893, -95.32296999785234],
+                    end_location: [29.803102202461925, -95.42148111418881]
+                })
+            }).then(response => response.json()).then(data => {
+                console.log('Ride started:', data);
+            });
+        }
+
+        // Start a ride when the page loads (for testing purposes)
+        window.onload = startRide;
+    </script>
+</body>
+</html>

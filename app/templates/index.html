@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Request Taxi{% endblock %}
+{% block content %}
+<h2>Request Taxi</h2>
+<form id="taxiRequestForm">
+    <label for="latitude">Latitude:</label>
+    <input type="text" id="latitude" name="latitude" required>
+    <label for="longitude">Longitude:</label>
+    <input type="text" id="longitude" name="longitude" required>
+    <label for="taxiPreference">Taxi Preference:</label>
+    <select id="taxiPreference" name="taxiPreference">
+        <option value="Any">Any</option>
+        <option value="Utility">Utility</option>
+        <option value="Deluxe">Deluxe</option>
+        <option value="Luxury">Luxury</option>
+    </select>
+    <button type="button" onclick="submitRequest()">Request Taxi</button>
+</form>
+<div id="response"></div>
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+{% endblock %}
