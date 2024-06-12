@@ -21,4 +21,7 @@ if __name__ == '__main__':
     taxi_simulator_thread.start()
     user_simulator_thread.start()
 
-    socket_io.run(app, debug=True)
+    socket_io.run(app, host='0.0.0.0', port=5000, debug=True)
+
+ 
+
